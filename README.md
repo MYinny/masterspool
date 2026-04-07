@@ -1,0 +1,2 @@
+# masterspool
+Masters Golf Pool
