@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masters Pool 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=EB+Garamond:wght@400;500;600&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #1a3a2a;
+  --green-light: #2a5a3a;
+  --gold: #c9a84c;
+  --gold-light: #e0c97a;
+  --bg: #f5f2ec;
+  --white: #ffffff;
+  --text: #2c2c2c;
+  --text-muted: #7a7a6e;
+  --border: #e0ddd5;
+  --red: #c0392b;
+  --par-green: #1a7a3a;
+  --cut-brown: #a08060;
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'EB Garamond',Georgia,serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* HEADER */
+.header { background:linear-gradient(135deg,#0d2018,var(--green),#1a4a30); border-bottom:3px solid var(--gold); padding:1.2rem 1.5rem; text-align:center; position:relative; }
+.header h1 { font-family:'Playfair Display',serif; color:var(--gold); font-size:2rem; font-weight:800; letter-spacing:2px; text-transform:uppercase; }
+.header .subtitle { font-family:'Courier Prime',monospace; color:rgba(255,255,255,0.6); font-size:0.75rem; letter-spacing:3px; margin-top:2px; }
+.live-dot { display:inline-block; width:8px; height:8px; background:#e74c3c; border-radius:50%; margin-right:6px; animation:pulse 1.5s infinite; vertical-align:middle; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
+
+/* NAV */
+.nav { display:flex; justify-content:center; gap:0; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
+.nav button { font-family:'Courier Prime',monospace; font-size:0.8rem; padding:0.7rem 1.2rem; border:none; background:none; cursor:pointer; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; border-bottom:2px solid transparent; transition:all 0.2s; }
+.nav button.active { color:var(--green); border-bottom-color:var(--gold); font-weight:700; }
+.nav button:hover { color:var(--green); }
+
+/* LAYOUT */
+.container { max-width:1000px; margin:0 auto; padding:1rem; }
+.tab { display:none; }
+.tab.active { display:block; }
+
+/* SUMMARY CARDS */
+.summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:0.8rem; margin-bottom:1.2rem; }
+.scard { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:0.8rem; text-align:center; box-shadow:var(--card-shadow); }
+.scard .label { font-family:'Courier Prime',monospace; font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; }
+.scard .val { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; color:var(--green); margin-top:2px; }
+
+/* LEADERBOARD TABLE */
+.lb-table { width:100%; border-collapse:collapse; background:var(--white); border-radius:8px; overflow:hidden; box-shadow:var(--card-shadow); }
+.lb-table thead th { background:var(--green); color:var(--gold); font-family:'Courier Prime',monospace; font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; padding:0.6rem 0.8rem; text-align:left; }
+.lb-table tbody tr { border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.15s; }
+.lb-table tbody tr:hover { background:#f9f7f2; }
+.lb-table td { padding:0.6rem 0.8rem; vertical-align:middle; }
+.pos-badge { font-family:'Courier Prime',monospace; font-weight:700; font-size:0.85rem; width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; }
+.pos-1 { background:var(--gold); color:var(--green); }
+.pos-2 { background:#c0c0c0; color:#333; }
+.pos-3 { background:#cd7f32; color:#fff; }
+.pos-other { background:var(--bg); color:var(--text-muted); }
+.name-cell { font-family:'Playfair Display',serif; font-weight:600; font-size:0.95rem; }
+.tb-hint { font-family:'Courier Prime',monospace; font-size:0.65rem; color:var(--text-muted); margin-left:4px; }
+.total-cell { font-family:'Courier Prime',monospace; font-weight:700; font-size:1rem; }
+.gap-cell { font-family:'Courier Prime',monospace; font-size:0.8rem; color:var(--text-muted); }
+.gap-lead { color:var(--gold); font-weight:700; }
+
+/* GOLFER PILLS */
+.pills { display:flex; flex-wrap:wrap; gap:4px; }
+.pill { font-family:'Courier Prime',monospace; font-size:0.65rem; padding:2px 7px; border-radius:10px; background:var(--bg); border:1px solid var(--border); white-space:nowrap; }
+.pill.counting { background:#fdf6e3; border-color:var(--gold); }
+.pill.cut { text-decoration:line-through; color:var(--cut-brown); opacity:0.7; }
+.score-under { color:var(--par-green); }
+.score-over { color:var(--red); }
+.score-even { color:var(--text-muted); }
+.score-cut { color:var(--cut-brown); }
+
+/* EXPANDED ROW */
+.expand-row td { padding:0 !important; }
+.expand-content { padding:0.8rem; background:#fafaf5; display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:0.6rem; }
+.gcard { background:var(--white); border:1px solid var(--border); border-radius:6px; padding:0.6rem; font-size:0.8rem; position:relative; }
+.gcard.counting { border-color:var(--gold); background:#fefcf5; }
+.gcard.cut { opacity:0.6; }
+.gcard .tier-badge { font-family:'Courier Prime',monospace; font-size:0.6rem; background:var(--green); color:var(--gold); padding:1px 5px; border-radius:3px; }
+.gcard .gname { font-family:'Playfair Display',serif; font-weight:600; margin:4px 0 2px; }
+.gcard .gname.cut { text-decoration:line-through; color:var(--cut-brown); }
+.gcard .rounds { font-family:'Courier Prime',monospace; font-size:0.7rem; color:var(--text-muted); }
+.gcard .star { position:absolute; top:4px; right:6px; color:var(--gold); font-size:0.9rem; }
+
+/* PICKS TAB */
+.picks-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1rem; }
+.pcard { background:var(--white); border:1px solid var(--border); border-radius:8px; overflow:hidden; box-shadow:var(--card-shadow); }
+.pcard-header { background:var(--green); color:var(--gold); padding:0.6rem 0.8rem; display:flex; justify-content:space-between; align-items:center; }
+.pcard-header .pname { font-family:'Playfair Display',serif; font-weight:700; font-size:1rem; }
+.pcard-header .ptotal { font-family:'Courier Prime',monospace; font-size:0.9rem; }
+.pcard-body { padding:0.6rem; }
+.pick-row { display:flex; align-items:center; gap:6px; padding:3px 0; font-size:0.85rem; border-bottom:1px solid var(--border); }
+.pick-row:last-child { border:none; }
+.pick-row .tier-badge { font-family:'Courier Prime',monospace; font-size:0.6rem; background:var(--bg); padding:1px 5px; border-radius:3px; flex-shrink:0; }
+.pick-row.counting { background:#fefcf5; }
+.pick-row.cut .pick-name { text-decoration:line-through; color:var(--cut-brown); }
+.pick-name { flex:1; font-family:'EB Garamond',serif; }
+.pick-score { font-family:'Courier Prime',monospace; font-size:0.8rem; font-weight:700; }
+
+/* RULES */
+.rules-content { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:1.5rem; box-shadow:var(--card-shadow); }
+.rules-content h2 { font-family:'Playfair Display',serif; color:var(--green); margin:1rem 0 0.5rem; font-size:1.3rem; }
+.rules-content h2:first-child { margin-top:0; }
+.rules-content p, .rules-content li { font-size:0.95rem; line-height:1.6; margin-bottom:0.4rem; }
+.rules-content ol, .rules-content ul { padding-left:1.5rem; }
+
+/* ADMIN */
+.admin-section { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:1.2rem; margin-bottom:1rem; box-shadow:var(--card-shadow); }
+.admin-section h3 { font-family:'Playfair Display',serif; color:var(--green); margin-bottom:0.6rem; }
+.admin-input { display:block; width:100%; font-family:'Courier Prime',monospace; font-size:0.85rem; padding:0.5rem; border:1px solid var(--border); border-radius:4px; margin-bottom:0.5rem; background:var(--bg); }
+textarea.admin-input { min-height:100px; resize:vertical; }
+.btn { font-family:'Courier Prime',monospace; font-size:0.8rem; padding:0.5rem 1rem; border:none; border-radius:4px; cursor:pointer; letter-spacing:0.5px; transition:all 0.15s; }
+.btn-green { background:var(--green); color:var(--gold); }
+.btn-green:hover { background:var(--green-light); }
+.btn-danger { background:var(--red); color:#fff; }
+.btn-danger:hover { background:#a93226; }
+.btn-outline { background:none; border:1px solid var(--border); color:var(--text); }
+.btn-outline:hover { border-color:var(--green); }
+
+/* MODAL */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; }
+.modal { background:var(--white); border-radius:8px; padding:1.5rem; width:90%; max-width:340px; text-align:center; }
+.modal h3 { font-family:'Playfair Display',serif; color:var(--green); margin-bottom:0.8rem; }
+.modal input { width:100%; font-family:'Courier Prime',monospace; padding:0.5rem; border:1px solid var(--border); border-radius:4px; margin-bottom:0.8rem; text-align:center; font-size:1rem; }
+
+/* STATUS BAR */
+.status-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; flex-wrap:wrap; gap:0.5rem; }
+.status-msg { font-family:'Courier Prime',monospace; font-size:0.7rem; color:var(--text-muted); }
+.refresh-btn { font-family:'Courier Prime',monospace; font-size:0.7rem; padding:4px 10px; border:1px solid var(--border); border-radius:4px; background:var(--white); cursor:pointer; }
+.refresh-btn:hover { border-color:var(--gold); }
+
+/* RESPONSIVE */
+@media(max-width:600px) {
+  .header h1 { font-size:1.4rem; }
+  .nav button { padding:0.5rem 0.7rem; font-size:0.7rem; }
+  .lb-table { font-size:0.85rem; }
+  .pills { display:none; }
+  .expand-content { grid-template-columns:1fr 1fr; }
+  .container { padding:0.6rem; }
+}
+
+.hidden { display:none !important; }
+.setup-steps { font-family:'EB Garamond',serif; }
+.setup-steps li { margin-bottom:0.5rem; }
+.col-fmt { font-family:'Courier Prime',monospace; font-size:0.75rem; background:var(--bg); padding:6px 10px; border-radius:4px; margin:0.5rem 0; overflow-x:auto; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>The Masters Pool</h1>
+  <div class="subtitle"><span class="live-dot" id="liveDot"></span>Augusta National — 2026</div>
+</div>
+
+<div class="nav">
+  <button class="active" data-tab="leaderboard">Leaderboard</button>
+  <button data-tab="picks">Picks &amp; Scores</button>
+  <button data-tab="rules">Rules</button>
+  <button data-tab="admin">Admin</button>
+</div>
+
+<div class="container">
+  <!-- LEADERBOARD TAB -->
+  <div class="tab active" id="tab-leaderboard">
+    <div class="summary" id="summaryCards">
+      <div class="scard"><div class="label">Entries</div><div class="val" id="s-entries">—</div></div>
+      <div class="scard"><div class="label">Leader</div><div class="val" id="s-leader">—</div></div>
+      <div class="scard"><div class="label">Scores Loaded</div><div class="val" id="s-scores">—</div></div>
+      <div class="scard"><div class="label">Updated</div><div class="val" id="s-updated">—</div></div>
+    </div>
+    <div class="status-bar">
+      <span class="status-msg" id="statusMsg">Loading…</span>
+      <button class="refresh-btn" id="refreshBtn">↻ Refresh</button>
+    </div>
+    <table class="lb-table">
+      <thead><tr><th>#</th><th>Name</th><th>Total</th><th>Gap</th><th class="hide-mobile">Best 4 Golfers</th></tr></thead>
+      <tbody id="lbBody"></tbody>
+    </table>
+  </div>
+
+  <!-- PICKS TAB -->
+  <div class="tab" id="tab-picks">
+    <div class="picks-grid" id="picksGrid"></div>
+  </div>
+
+  <!-- RULES TAB -->
+  <div class="tab" id="tab-rules">
+    <div class="rules-content">
+      <h2>How It Works</h2>
+      <ol>
+        <li>Each participant picks <strong>8 golfers</strong> across 4 tiers: 3 from Tier 1, 2 from Tier 2, 2 from Tier 3, 1 from Tier 4.</li>
+        <li>Your <strong>best 4 of 8 scores</strong> count toward your team total.</li>
+        <li>Lowest total wins.</li>
+        <li>Golfers who <strong>miss the cut</strong> receive 80 strokes for each of Rounds 3 and 4 (effectively +160 added to their R1+R2 total).</li>
+        <li><strong>Tiebreaker</strong>: closest guess to the winning score without going over. If all guesses go over, closest wins.</li>
+      </ol>
+      <h2>Tier Structure</h2>
+      <p><strong>Tier 1 — Pick 3</strong> (5/1 to 55/1): Scottie Scheffler, Bryson DeChambeau, Jon Rahm, Rory McIlroy, Ludvig Aberg, Xander Schauffele, Matt Fitzpatrick, Cameron Young, Tommy Fleetwood, Robert MacIntyre, Justin Rose, Patrick Reed, Hideki Matsuyama, Brooks Koepka, Collin Morikawa, Jordan Spieth, Min Woo Lee, Akshay Bhatia, Chris Gotterup, Russell Henley, Viktor Hovland</p>
+      <p><strong>Tier 2 — Pick 2</strong> (70/1 to 125/1): Adam Scott, Sepp Straka, Shane Lowry, Si Woo Kim, Jake Knapp, Jason Day, Patrick Cantlay, Jacob Bridgeman, Justin Thomas, Corey Conners, Marco Penge, Nicolai Hojgaard, Sam Burns, Tyrrell Hatton, Cameron Smith, Gary Woodland, Harris English, J.J. Spaun, Maverick McNealy, Sungjae Im, Daniel Berger, Max Homa</p>
+      <p><strong>Tier 3 — Pick 2</strong> (150/1 to 250/1): Ben Griffin, Brian Harman, Aaron Rai, Alex Noren, Casey Jarvis, Kurt Kitayama, Rasmus Hojgaard, Wyndham Clark, Dustin Johnson, Keegan Bradley, Ryan Fox, Ryan Gerard, Sergio Garcia, Aldrich Potgieter, Haotong Li, Harry Hall, Johnny Keefer, Matt McCarty, Max Greyserman, Michael Kim, Nico Echavarria, Rasmus Neergaard-Petersen, Tom McKibbin</p>
+      <p><strong>Tier 4 — Pick 1</strong> (300/1 to 2500/1): Andrew Novak, Carlos Ortiz, Nick Taylor, Sam Stevens, Sami Valimaki, Kristoffer Reitan, Bubba Watson, Davis Riley, Michael Brennan, Brian Campbell, Charl Schwartzel, Danny Willett, Zach Johnson, Naoyuki Kataoka, Ethan Fang, Mason Howell, Angel Cabrera, Brandon Holtz, Fifa Laopakdee, Jackson Herrington, Fred Couples, Mateo Pulcini, Mike Weir, Vijay Singh, Jose Maria Olazabal</p>
+    </div>
+  </div>
+
+  <!-- ADMIN TAB -->
+  <div class="tab" id="tab-admin">
+    <div id="adminGate"></div>
+    <div id="adminContent" class="hidden">
+      <div class="admin-section">
+        <h3>Sheet Config</h3>
+        <input class="admin-input" id="inputSheetId" placeholder="Google Sheet ID">
+        <input class="admin-input" id="inputSheetName" placeholder="Sheet tab name (default: Entries)" value="Entries">
+        <button class="btn btn-green" id="btnSaveSheet">Save &amp; Connect</button>
+        <div class="status-msg" id="sheetStatus" style="margin-top:6px"></div>
+      </div>
+      <div class="admin-section">
+        <h3>Setup Instructions</h3>
+        <ol class="setup-steps">
+          <li>Create a Google Sheet with a tab named <strong>Entries</strong></li>
+          <li>Row 1 headers (exact):</li>
+        </ol>
+        <div class="col-fmt">Name | Tiebreaker | T1_Pick1 | T1_Pick2 | T1_Pick3 | T2_Pick1 | T2_Pick2 | T3_Pick1 | T3_Pick2 | T4_Pick1</div>
+        <ol class="setup-steps" start="3">
+          <li>Fill rows with participant entries</li>
+          <li>Share the sheet: File → Share → Anyone with link → Viewer</li>
+          <li>Copy the Sheet ID from the URL (the long string between /d/ and /edit)</li>
+          <li>Paste the ID above and click Save &amp; Connect</li>
+        </ol>
+      </div>
+      <div class="admin-section">
+        <h3>Manual JSON Override</h3>
+        <textarea class="admin-input" id="jsonOverride" placeholder='[{"name":"Mike V.","tiebreaker":-18,"picks":["Scottie Scheffler","Rory McIlroy","Jon Rahm","Shane Lowry","Justin Thomas","Brian Harman","Dustin Johnson","Nick Taylor"]}]'></textarea>
+        <button class="btn btn-green" id="btnLoadJson">Load JSON</button>
+      </div>
+      <div class="admin-section">
+        <h3>Danger Zone</h3>
+        <button class="btn btn-danger" id="btnClear">Clear All Data</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PASSWORD MODAL (created dynamically) -->
+
+<script>
+// ---- HELPERS ----
+function escHtml(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function $(id){return document.getElementById(id);}
+function qs(sel){return document.querySelector(sel);}
+async function corsFetch(url) {
+  try { const r = await fetch(url); if(r.ok) return r; } catch(e){}
+  // Fallback through CORS proxies
+  const proxies = [
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`
+  ];
+  for(const p of proxies) {
+    try { const r = await fetch(p(url)); if(r.ok) return r; } catch(e){}
+  }
+  throw new Error('All fetch attempts failed for: '+url);
+}
+
+// ---- TIER MAP ----
+const TIERS = {
+  'Scottie Scheffler':1,'Bryson DeChambeau':1,'Jon Rahm':1,'Rory McIlroy':1,'Ludvig Aberg':1,'Xander Schauffele':1,'Matt Fitzpatrick':1,'Cameron Young':1,'Tommy Fleetwood':1,'Robert MacIntyre':1,'Justin Rose':1,'Patrick Reed':1,'Hideki Matsuyama':1,'Brooks Koepka':1,'Collin Morikawa':1,'Jordan Spieth':1,'Min Woo Lee':1,'Akshay Bhatia':1,'Chris Gotterup':1,'Russell Henley':1,'Viktor Hovland':1,
+  'Adam Scott':2,'Sepp Straka':2,'Shane Lowry':2,'Si Woo Kim':2,'Jake Knapp':2,'Jason Day':2,'Patrick Cantlay':2,'Jacob Bridgeman':2,'Justin Thomas':2,'Corey Conners':2,'Marco Penge':2,'Nicolai Hojgaard':2,'Sam Burns':2,'Tyrrell Hatton':2,'Cameron Smith':2,'Gary Woodland':2,'Harris English':2,'J.J. Spaun':2,'Maverick McNealy':2,'Sungjae Im':2,'Daniel Berger':2,'Max Homa':2,
+  'Ben Griffin':3,'Brian Harman':3,'Aaron Rai':3,'Alex Noren':3,'Casey Jarvis':3,'Kurt Kitayama':3,'Rasmus Hojgaard':3,'Wyndham Clark':3,'Dustin Johnson':3,'Keegan Bradley':3,'Ryan Fox':3,'Ryan Gerard':3,'Sergio Garcia':3,'Aldrich Potgieter':3,'Haotong Li':3,'Harry Hall':3,'Johnny Keefer':3,'Matt McCarty':3,'Max Greyserman':3,'Michael Kim':3,'Nico Echavarria':3,'Rasmus Neergaard-Petersen':3,'Tom McKibbin':3,
+  'Andrew Novak':4,'Carlos Ortiz':4,'Nick Taylor':4,'Sam Stevens':4,'Sami Valimaki':4,'Kristoffer Reitan':4,'Bubba Watson':4,'Davis Riley':4,'Michael Brennan':4,'Brian Campbell':4,'Charl Schwartzel':4,'Danny Willett':4,'Zach Johnson':4,'Naoyuki Kataoka':4,'Ethan Fang':4,'Mason Howell':4,'Angel Cabrera':4,'Brandon Holtz':4,'Fifa Laopakdee':4,'Jackson Herrington':4,'Fred Couples':4,'Mateo Pulcini':4,'Mike Weir':4,'Vijay Singh':4,'Jose Maria Olazabal':4
+};
+
+// ---- STATE ----
+let entries = [];
+let golferScores = {}; // name -> { toPar, totalStrokes, rounds:[], cut:bool, roundsPlayed:int }
+let lastUpdated = null;
+let expandedRow = null;
+
+// ---- TABS ----
+document.querySelectorAll('.nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if(btn.dataset.tab === 'admin' && sessionStorage.getItem('masters_admin') !== '1') {
+      showPasswordModal(); return;
+    }
+    switchTab(btn.dataset.tab);
+  });
+});
+function switchTab(tab) {
+  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id==='tab-'+tab));
+  if(tab==='admin') showAdminContent();
+}
+
+// ---- PASSWORD MODAL ----
+function showPasswordModal() {
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay';
+  ov.innerHTML = `<div class="modal"><h3>Admin Access</h3><input type="password" id="pwInput" placeholder="Password"><button class="btn btn-green" id="pwSubmit" style="width:100%">Unlock</button></div>`;
+  document.body.appendChild(ov);
+  const inp = ov.querySelector('#pwInput');
+  const submit = () => {
+    if(inp.value === 'M@$t3r$') { sessionStorage.setItem('masters_admin','1'); ov.remove(); switchTab('admin'); }
+    else { inp.style.borderColor='var(--red)'; inp.value=''; inp.placeholder='Wrong password'; }
+  };
+  ov.querySelector('#pwSubmit').addEventListener('click', submit);
+  inp.addEventListener('keydown', e => { if(e.key==='Enter') submit(); });
+  ov.addEventListener('click', e => { if(e.target===ov) ov.remove(); });
+  inp.focus();
+}
+function showAdminContent() {
+  $('adminGate').classList.add('hidden');
+  $('adminContent').classList.remove('hidden');
+  $('inputSheetId').value = localStorage.getItem('masters_sheet_id')||'';
+  $('inputSheetName').value = localStorage.getItem('masters_sheet_name')||'Entries';
+}
+
+// ---- ADMIN ACTIONS ----
+$('btnSaveSheet').addEventListener('click', async () => {
+  const sid = $('inputSheetId').value.trim();
+  const sname = $('inputSheetName').value.trim()||'Entries';
+  localStorage.setItem('masters_sheet_id', sid);
+  localStorage.setItem('masters_sheet_name', sname);
+  $('sheetStatus').textContent = 'Saved. Fetching…';
+  await fetchEntries();
+  $('sheetStatus').textContent = entries.length ? `Loaded ${entries.length} entries` : 'No entries found or fetch failed';
+});
+$('btnLoadJson').addEventListener('click', () => {
+  try {
+    const data = JSON.parse($('jsonOverride').value);
+    entries = data.map(e => ({ name:e.name, tiebreaker:parseInt(e.tiebreaker)||0, picks:e.picks||[] }));
+    localStorage.setItem('masters_entries', JSON.stringify(entries));
+    render();
+    alert('Loaded ' + entries.length + ' entries from JSON');
+  } catch(err) { alert('Invalid JSON: '+err.message); }
+});
+$('btnClear').addEventListener('click', () => {
+  if(confirm('Clear all saved entries and sheet config?')) {
+    localStorage.removeItem('masters_entries');
+    localStorage.removeItem('masters_sheet_id');
+    localStorage.removeItem('masters_sheet_name');
+    entries = [];
+    render();
+  }
+});
+$('refreshBtn').addEventListener('click', () => fetchAll());
+
+// ---- FETCH ENTRIES FROM GOOGLE SHEET ----
+async function fetchEntries() {
+  const sid = localStorage.getItem('masters_sheet_id');
+  const sname = localStorage.getItem('masters_sheet_name')||'Entries';
+  if(!sid) {
+    const cached = localStorage.getItem('masters_entries');
+    if(cached) { try { entries = JSON.parse(cached); } catch(e){} }
+    return;
+  }
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${sid}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sname)}`;
+    const res = await corsFetch(url);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    if(rows.length < 2) return;
+    const hdr = rows[0].map(h => h.trim());
+    const nameIdx = hdr.indexOf('Name');
+    const tbIdx = hdr.indexOf('Tiebreaker');
+    const pickCols = ['T1_Pick1','T1_Pick2','T1_Pick3','T2_Pick1','T2_Pick2','T3_Pick1','T3_Pick2','T4_Pick1'];
+    const pickIdxs = pickCols.map(c => hdr.indexOf(c));
+    entries = [];
+    for(let i=1;i<rows.length;i++) {
+      const r = rows[i];
+      const name = (r[nameIdx]||'').trim();
+      if(!name) continue;
+      entries.push({
+        name,
+        tiebreaker: parseInt(r[tbIdx])||0,
+        picks: pickIdxs.map(idx => (r[idx]||'').trim()).filter(Boolean)
+      });
+    }
+    localStorage.setItem('masters_entries', JSON.stringify(entries));
+  } catch(e) {
+    console.warn('Sheet fetch failed:', e);
+    const cached = localStorage.getItem('masters_entries');
+    if(cached) { try { entries = JSON.parse(cached); } catch(ex){} }
+  }
+}
+
+function parseCSV(text) {
+  const rows = []; let row = []; let cell = ''; let inQ = false;
+  for(let i=0;i<text.length;i++) {
+    const c = text[i];
+    if(inQ) {
+      if(c==='"' && text[i+1]==='"') { cell+='"'; i++; }
+      else if(c==='"') inQ=false;
+      else cell+=c;
+    } else {
+      if(c==='"') inQ=true;
+      else if(c===',') { row.push(cell); cell=''; }
+      else if(c==='\n'||c==='\r') { if(c==='\r'&&text[i+1]==='\n') i++; row.push(cell); cell=''; if(row.some(c=>c.trim())) rows.push(row); row=[]; }
+      else cell+=c;
+    }
+  }
+  row.push(cell); if(row.some(c=>c.trim())) rows.push(row);
+  return rows;
+}
+
+// ---- FETCH ESPN SCORES ----
+async function fetchScores() {
+  try {
+    const res = await corsFetch('https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard');
+    const data = await res.json();
+    const events = data.events||[];
+    // Find Masters event
+    let ev = events.find(e => e.name && e.name.toLowerCase().includes('masters'));
+    if(!ev && events.length) ev = events[0]; // fallback to current event
+    if(!ev) { $('statusMsg').textContent = 'Tournament not yet started or no event found'; return; }
+    const comp = ev.competitions && ev.competitions[0];
+    if(!comp) return;
+    const competitors = comp.competitors||[];
+    golferScores = {};
+    competitors.forEach(c => {
+      const name = c.athlete?.displayName || c.athlete?.fullName || '';
+      if(!name) return;
+      const isCut = c.status?.type?.name === 'STATUS_CUT' || (c.status?.type?.description||'').toLowerCase()==='cut';
+      const rounds = (c.linescores||[]).map(l => l.value || 0);
+      const roundsPlayed = rounds.length;
+      let totalStrokes = rounds.reduce((a,b)=>a+b, 0);
+      if(isCut) totalStrokes += (4 - roundsPlayed) * 80;
+      const toPar = c.score?.value != null ? c.score.value : (c.statistics?.[0]?.value ?? null);
+      const toParDisplay = c.score?.displayValue || (toPar != null ? (toPar > 0 ? '+'+toPar : toPar === 0 ? 'E' : ''+toPar) : '—');
+      golferScores[name] = { toPar: toPar != null ? toPar : 999, totalStrokes, rounds, cut: isCut, roundsPlayed, toParDisplay, displayName: name };
+    });
+    lastUpdated = new Date();
+    $('liveDot').style.display = 'inline-block';
+  } catch(e) {
+    console.warn('ESPN fetch failed:', e);
+    $('statusMsg').textContent = 'Score fetch failed — will retry';
+  }
+}
+
+// ---- NAME MATCHING ----
+function matchGolfer(pickName) {
+  // Build lookup on demand
+  const names = Object.keys(golferScores);
+  const pickLower = pickName.toLowerCase().trim();
+  // Pass 1: exact
+  let m = names.find(n => n.toLowerCase() === pickLower);
+  if(m) return m;
+  // Pass 2: last name + first initial
+  const parts = pickLower.split(/\s+/);
+  const pickLast = parts[parts.length-1];
+  const pickInit = parts[0]?.[0]||'';
+  m = names.find(n => {
+    const p = n.toLowerCase().split(/\s+/);
+    return p[p.length-1]===pickLast && (p[0]?.[0]||'')===pickInit;
+  });
+  if(m) return m;
+  // Pass 3: last name only
+  m = names.find(n => {
+    const p = n.toLowerCase().split(/\s+/);
+    return p[p.length-1]===pickLast;
+  });
+  return m || null;
+}
+
+function getScore(pickName) {
+  const matched = matchGolfer(pickName);
+  if(!matched) return null;
+  return golferScores[matched];
+}
+
+// ---- CALCULATE STANDINGS ----
+function calcStandings() {
+  return entries.map(entry => {
+    const golfers = entry.picks.map(pick => {
+      const score = getScore(pick);
+      return {
+        name: pick,
+        tier: TIERS[pick]||'?',
+        score: score,
+        totalStrokes: score ? score.totalStrokes : 9999,
+        toPar: score ? score.toPar : 999,
+        cut: score ? score.cut : false,
+        rounds: score ? score.rounds : [],
+        toParDisplay: score ? score.toParDisplay : '—'
+      };
+    });
+    // Best 4 by totalStrokes
+    const sorted = [...golfers].sort((a,b) => a.totalStrokes - b.totalStrokes);
+    const counting = sorted.slice(0,4);
+    const countingNames = new Set(counting.map(g=>g.name));
+    golfers.forEach(g => g.counting = countingNames.has(g.name));
+    const total = counting.reduce((s,g) => s + g.totalStrokes, 0);
+    return { ...entry, golfers, total, counting: countingNames };
+  }).sort((a,b) => {
+    if(a.total !== b.total) return a.total - b.total;
+    // Tiebreaker: not applied to ranking display, just shown
+    return 0;
+  });
+}
+
+// ---- RENDER ----
+function render() {
+  const standings = calcStandings();
+  // Summary
+  $('s-entries').textContent = entries.length || '—';
+  $('s-leader').textContent = standings.length ? escHtml(standings[0].name) : '—';
+  $('s-scores').textContent = Object.keys(golferScores).length || '—';
+  $('s-updated').textContent = lastUpdated ? lastUpdated.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '—';
+  $('statusMsg').textContent = entries.length ?
+    (Object.keys(golferScores).length ? `${entries.length} entries · ${Object.keys(golferScores).length} golfer scores` : `${entries.length} entries · Waiting for scores`) :
+    'No entries loaded — configure sheet in Admin';
+
+  // Leaderboard
+  const tbody = $('lbBody');
+  tbody.innerHTML = '';
+  const leadTotal = standings.length ? standings[0].total : 0;
+
+  standings.forEach((entry, idx) => {
+    const pos = idx + 1;
+    const posClass = pos===1?'pos-1':pos===2?'pos-2':pos===3?'pos-3':'pos-other';
+    const gap = entry.total - leadTotal;
+    const gapStr = gap===0 ? '<span class="gap-lead">LEAD</span>' : '+'+gap;
+    const countingGolfers = entry.golfers.filter(g=>g.counting).sort((a,b)=>a.totalStrokes-b.totalStrokes);
+    const pillsHtml = countingGolfers.map(g => {
+      const lastName = escHtml(g.name.split(' ').pop());
+      const scoreClass = g.cut?'score-cut':g.toPar<0?'score-under':g.toPar>0?'score-over':'score-even';
+      const cutClass = g.cut?' cut':'';
+      return `<span class="pill counting${cutClass}"><span class="${scoreClass}">${lastName} ${escHtml(g.toParDisplay)}</span></span>`;
+    }).join('');
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="pos-badge ${posClass}">${pos}</span></td>
+      <td><span class="name-cell">${escHtml(entry.name)}</span><span class="tb-hint">(${entry.tiebreaker>0?'+':''}${entry.tiebreaker})</span></td>
+      <td class="total-cell">${entry.total < 9000 ? entry.total : '—'}</td>
+      <td class="gap-cell">${entry.total < 9000 ? gapStr : '—'}</td>
+      <td class="hide-mobile"><div class="pills">${pillsHtml}</div></td>`;
+    tr.addEventListener('click', () => toggleExpand(idx, tr, entry));
+    tbody.appendChild(tr);
+
+    // Expanded row placeholder
+    const exTr = document.createElement('tr');
+    exTr.className = 'expand-row hidden';
+    exTr.id = 'expand-'+idx;
+    exTr.innerHTML = '<td colspan="5"></td>';
+    tbody.appendChild(exTr);
+  });
+
+  // Picks tab
+  renderPicks(standings);
+}
+
+function toggleExpand(idx, tr, entry) {
+  const exTr = $('expand-'+idx);
+  if(expandedRow === idx) { exTr.classList.add('hidden'); expandedRow = null; return; }
+  // Close previous
+  document.querySelectorAll('.expand-row').forEach(r => r.classList.add('hidden'));
+  expandedRow = idx;
+  const td = exTr.querySelector('td');
+  td.innerHTML = '<div class="expand-content">' + entry.golfers.map(g => {
+    const countClass = g.counting?' counting':'';
+    const cutClass = g.cut?' cut':'';
+    const nameClass = g.cut?' cut':'';
+    const scoreClass = g.cut?'score-cut':g.toPar<0?'score-under':g.toPar>0?'score-over':'score-even';
+    const roundsStr = g.rounds.length ? g.rounds.join(' · ') : '—';
+    return `<div class="gcard${countClass}${cutClass}">
+      <span class="tier-badge">T${g.tier}</span>
+      ${g.counting?'<span class="star">★</span>':''}
+      <div class="gname${nameClass}">${escHtml(g.name)}</div>
+      <div class="${scoreClass}" style="font-family:'Courier Prime',monospace;font-weight:700">${escHtml(g.toParDisplay)}</div>
+      <div class="rounds">R: ${escHtml(roundsStr)}</div>
+      ${g.cut?'<div class="rounds" style="color:var(--cut-brown)">CUT (+160 penalty)</div>':''}
+    </div>`;
+  }).join('') + '</div>';
+  exTr.classList.remove('hidden');
+}
+
+function renderPicks(standings) {
+  const grid = $('picksGrid');
+  grid.innerHTML = '';
+  standings.forEach(entry => {
+    const picks = entry.golfers.map(g => {
+      const countClass = g.counting?' counting':'';
+      const cutClass = g.cut?' cut':'';
+      const scoreClass = g.cut?'score-cut':g.toPar<0?'score-under':g.toPar>0?'score-over':'score-even';
+      return `<div class="pick-row${countClass}${cutClass}">
+        <span class="tier-badge">T${g.tier}</span>
+        <span class="pick-name">${escHtml(g.name)}</span>
+        <span class="pick-score ${scoreClass}">${escHtml(g.toParDisplay)}</span>
+      </div>`;
+    }).join('');
+    const totalDisplay = entry.total < 9000 ? entry.total : '—';
+    grid.innerHTML += `<div class="pcard">
+      <div class="pcard-header"><span class="pname">${escHtml(entry.name)}</span><span class="ptotal">${totalDisplay}</span></div>
+      <div class="pcard-body">${picks}</div>
+    </div>`;
+  });
+}
+
+// ---- DATA FLOW ----
+async function fetchAll() {
+  $('statusMsg').textContent = 'Refreshing…';
+  await fetchEntries();
+  await fetchScores();
+  render();
+}
+
+// Init
+(async () => {
+  // Load cache
+  const cached = localStorage.getItem('masters_entries');
+  if(cached) { try { entries = JSON.parse(cached); } catch(e){} }
+  render();
+  await fetchAll();
+  // Auto-refresh every 3 min
+  setInterval(async () => { await fetchScores(); render(); }, 180000);
+})();
+</script>
+</body>
+</html>
